@@ -15,33 +15,57 @@ This skill uses Pine Voice's REST API directly via `exec` (curl). No plugin inst
 ## Prerequisites
 
 - A **Pine AI account** with a Pro subscription — sign up at https://19pine.ai
-- **Environment variables** set in your shell or OpenClaw config:
-  - `PINE_ACCESS_TOKEN` — your Pine access token
-  - `PINE_USER_ID` — your Pine user ID
 
-### Getting your credentials
+## Authentication
 
-Run this auth flow once to get your token and user ID:
+Credentials are stored in `~/.pine-voice/credentials.json`. Before making any call, check if this file exists:
 
 ```bash
-# Step 1: Request a verification code
+cat ~/.pine-voice/credentials.json 2>/dev/null || echo "NOT_AUTHENTICATED"
+```
+
+If the file exists and contains valid JSON with `access_token` and `user_id`, skip to **How to make a call**.
+
+If the file does not exist or prints `NOT_AUTHENTICATED`, run the authentication flow below. **Ask the user for their Pine AI account email to begin.**
+
+### Step 1: Request a verification code
+
+```bash
 curl -s -X POST https://www.19pine.ai/api/v2/auth/email/request \
   -H "Content-Type: application/json" \
-  -d '{"email": "you@example.com"}'
-# Returns: {"data": {"request_token": "TOKEN_HERE"}}
+  -d '{"email": "USER_EMAIL_HERE"}'
+```
 
-# Step 2: Check your email for the code, then verify
+This returns `{"data": {"request_token": "TOKEN"}}`. Save the `request_token` — you will need it in the next step.
+
+Tell the user: *"A verification code has been sent to your email. Please check your inbox (and spam folder) and give me the code."*
+
+### Step 2: Verify the code
+
+Once the user provides the code:
+
+```bash
 curl -s -X POST https://www.19pine.ai/api/v2/auth/email/verify \
   -H "Content-Type: application/json" \
-  -d '{"email": "you@example.com", "request_token": "TOKEN_HERE", "code": "1234"}'
-# Returns: {"data": {"access_token": "...", "id": "..."}}
+  -d '{"email": "USER_EMAIL_HERE", "request_token": "TOKEN_FROM_STEP_1", "code": "CODE_FROM_USER"}'
 ```
 
-Then export the values:
+This returns `{"data": {"access_token": "...", "id": "..."}}`.
+
+### Step 3: Save credentials
+
+Store the credentials locally so they persist across sessions:
+
 ```bash
-export PINE_ACCESS_TOKEN="your_access_token"
-export PINE_USER_ID="your_user_id"
+mkdir -p ~/.pine-voice && cat > ~/.pine-voice/credentials.json << 'ENDCRED'
+{"access_token": "ACCESS_TOKEN_HERE", "user_id": "USER_ID_HERE"}
+ENDCRED
+chmod 600 ~/.pine-voice/credentials.json
 ```
+
+Replace `ACCESS_TOKEN_HERE` with the `access_token` value and `USER_ID_HERE` with the `id` value from the verify response.
+
+Tell the user: *"Authentication successful! Your credentials have been saved. You can now make phone calls."*
 
 ## When to use
 
@@ -59,19 +83,25 @@ Use this skill when the user wants you to **make a phone call** on their behalf.
 
 ## How to make a call
 
-### Step 1: Gather all required information
+### Step 1: Load credentials
+
+```bash
+cat ~/.pine-voice/credentials.json
+```
+
+Parse the JSON to extract `access_token` and `user_id`. If the file is missing, run the **Authentication** flow above first.
+
+### Step 2: Gather all required information
 
 Before calling, you **must** collect every piece of information the callee might need. The voice agent **cannot ask a human for missing information during the call**. Anticipate what will be required: authentication details, payment info, negotiation targets, relevant context.
 
-### Step 2: Initiate the call
-
-Use `exec` to call the Pine Voice API:
+### Step 3: Initiate the call
 
 ```bash
 curl -s -X POST https://agent3-api-gateway-staging.19pine.ai/api/v2/voice/call \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $PINE_ACCESS_TOKEN" \
-  -H "X-Pine-User-Id: $PINE_USER_ID" \
+  -H "Authorization: Bearer ACCESS_TOKEN" \
+  -H "X-Pine-User-Id: USER_ID" \
   -d '{
     "dialed_number": "+14155551234",
     "callee_name": "Comcast Customer Service",
@@ -85,16 +115,18 @@ curl -s -X POST https://agent3-api-gateway-staging.19pine.ai/api/v2/voice/call \
   }'
 ```
 
+Replace `ACCESS_TOKEN` and `USER_ID` with the values from `~/.pine-voice/credentials.json`.
+
 This returns `{"call_id": "..."}`. The call is now **active** — Pine's voice agent has dialed and is on the line.
 
-### Step 3: Poll for results
+### Step 4: Poll for results
 
 Poll every 30 seconds until the call completes:
 
 ```bash
 curl -s https://agent3-api-gateway-staging.19pine.ai/api/v2/voice/call/CALL_ID_HERE \
-  -H "Authorization: Bearer $PINE_ACCESS_TOKEN" \
-  -H "X-Pine-User-Id: $PINE_USER_ID"
+  -H "Authorization: Bearer ACCESS_TOKEN" \
+  -H "X-Pine-User-Id: USER_ID"
 ```
 
 Terminal statuses: `completed`, `Completed`, `HungupByPeer`, `HungupByLocal`, `Timeout`, `TooLongSilence` (all mean done), `failed`, `Failed`, `DialFailed`, `NoAnswer`, `Declined` (all mean failed), `cancelled`.
@@ -105,9 +137,9 @@ When complete, the response includes `transcript` (array of `{speaker, text}` en
 
 Example task for sessions_spawn:
 
-> Make a phone call using curl to the Pine Voice API. Use env vars $PINE_ACCESS_TOKEN and $PINE_USER_ID for auth. POST to https://agent3-api-gateway-staging.19pine.ai/api/v2/voice/call with: dialed_number "+14155551234", callee_name "The Restaurant", callee_context "Italian restaurant, making a dinner reservation", call_objective "Reserve a table for 4 at 7pm tonight", caller "communicator". Then poll GET /api/v2/voice/call/{call_id} every 30 seconds until the status is terminal. Report the full transcript and outcome.
+> Make a phone call using curl to the Pine Voice API. First read credentials from ~/.pine-voice/credentials.json. POST to https://agent3-api-gateway-staging.19pine.ai/api/v2/voice/call with: dialed_number "+14155551234", callee_name "The Restaurant", callee_context "Italian restaurant, making a dinner reservation", call_objective "Reserve a table for 4 at 7pm tonight", caller "communicator". Then poll GET /api/v2/voice/call/{call_id} every 30 seconds until the status is terminal. Report the full transcript and outcome.
 
-### Step 4: Evaluate the transcript
+### Step 5: Evaluate the transcript
 
 **Do NOT rely on the `status` field** to judge success. Read what the OTHER party actually said.
 

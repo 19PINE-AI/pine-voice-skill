@@ -4,8 +4,14 @@
   "description": "Your agent dials real phone numbers, waits on hold, navigates IVR menus, negotiates your bills, and returns a full transcript. Powered by Pine AI's voice agent. 93% success rate across 50,000+ users.",
   "category": "communication",
   "tags": ["phone", "voice", "calls", "pine-ai", "negotiation", "customer-service", "ivr"],
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "MIT",
+  "credentials": {
+    "pine-ai": {
+      "description": "Pine AI account (Pro subscription). The skill handles authentication interactively via email verification — no manual token setup required.",
+      "url": "https://19pine.ai"
+    }
+  },
   "support": {
     "url": "https://pineclaw.com",
     "docs": "https://pineclaw.com/voice/api.html"
