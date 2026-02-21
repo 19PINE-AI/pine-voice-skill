@@ -1,6 +1,6 @@
 ---
 name: pine-voice
-description: Make real phone calls via Pine AI's voice agent using the REST API. No plugin required.
+description: Give your agent a real phone. It dials, waits on hold, negotiates your bills, and returns a full transcript.
 metadata:
   { "openclaw": { "emoji": "📞" } }
 command-tool: exec
