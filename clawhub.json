@@ -1,10 +1,10 @@
 {
   "name": "pine-voice",
   "tagline": "Give your agent a real phone — it dials, negotiates, and returns a transcript",
-  "description": "Your agent dials real phone numbers, waits on hold, navigates IVR menus, negotiates your bills, and returns a full transcript. Powered by Pine AI's voice agent. 93% success rate across 50,000+ users.",
+  "description": "Your agent dials real phone numbers, waits on hold, navigates IVR menus, negotiates your bills, and returns a full transcript. Powered by Pine AI's voice agent. Built-in email auth flow — no env vars or manual token setup needed.",
   "category": "communication",
   "tags": ["phone", "voice", "calls", "pine-ai", "negotiation", "customer-service", "ivr"],
-  "version": "1.1.0",
+  "version": "1.2.1",
   "license": "MIT",
   "credentials": {
     "pine-ai": {
