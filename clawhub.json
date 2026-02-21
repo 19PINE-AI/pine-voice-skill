@@ -1,0 +1,13 @@
+{
+  "name": "pine-voice",
+  "tagline": "Make real phone calls via Pine AI — no plugin required",
+  "description": "Give your OpenClaw agent the ability to make real phone calls using Pine AI's voice agent. Calls real numbers, navigates IVR systems, handles negotiations, and returns full transcripts. Uses the REST API directly via curl — no plugin installation or tools.allow configuration needed.",
+  "category": "communication",
+  "tags": ["phone", "voice", "calls", "pine-ai", "negotiation", "customer-service", "ivr"],
+  "version": "1.0.0",
+  "license": "MIT",
+  "support": {
+    "url": "https://pineclaw.com",
+    "docs": "https://pineclaw.com/voice/api.html"
+  }
+}
