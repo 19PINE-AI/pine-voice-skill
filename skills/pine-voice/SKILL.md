@@ -12,13 +12,15 @@ Make real phone calls via Pine AI's voice agent. The agent calls the specified n
 
 ## Authentication
 
+Credentials persist in `~/.pine-voice/credentials.json` — users only need to authenticate once.
+
 Before making calls, check if already authenticated:
 
 ```bash
-node {baseDir}/scripts/call-status.mjs test 2>&1 || true
+node {baseDir}/scripts/auth-check.mjs
 ```
 
-If you see "Not authenticated", run the auth flow. **Ask the user for their Pine AI account email** (sign up at https://19pine.ai).
+If `authenticated` is `true`, skip straight to **How to make a call**. If `false`, run the auth flow below. **Ask the user for their Pine AI account email** (sign up at https://19pine.ai).
 
 ### Step 1: Request verification code
 
@@ -148,4 +150,4 @@ Pine Voice works best with models that have thinking/reasoning capabilities.
 
 ## Privacy
 
-Pine Voice processes call data on Pine AI's servers. Credentials are stored locally in `~/.pine-voice/credentials.json` with restricted permissions (600). Call transcripts are returned in the API response and are not stored locally. See https://19pine.ai/privacy for Pine AI's data handling policies.
+Pine Voice processes call data on Pine AI's servers. Credentials are stored locally in `~/.pine-voice/credentials.json` with restricted permissions (600). Call transcripts are returned in the API response and are not stored locally. See https://www.19pine.ai/page/privacy-policy for Pine AI's data handling policies.
